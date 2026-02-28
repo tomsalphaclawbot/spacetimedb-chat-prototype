@@ -1,0 +1,11 @@
+# Example host-level Cloudflare tunnel config (NOT run inside docker compose)
+# Copy to ~/.cloudflared/config-spacetimedb-chat.yml and replace tunnel id/credential path.
+
+tunnel: <tunnel-uuid>
+credentials-file: /Users/openclaw/.cloudflared/<tunnel-uuid>.json
+ingress:
+  - hostname: stdb-chat.tomsalphaclawbot.work
+    service: http://127.0.0.1:3640
+  - hostname: stdb-node.tomsalphaclawbot.work
+    service: http://127.0.0.1:3900
+  - service: http_status:404

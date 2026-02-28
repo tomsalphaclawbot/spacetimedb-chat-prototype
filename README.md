@@ -15,7 +15,7 @@ Experimental real-time multi-user chat built with SpaceTimeDB + React/TypeScript
 - Docker Compose runtime:
   - `stdb` (self-hosted SpaceTimeDB)
   - `app` (static built React app)
-  - `cloudflared` (public tunnel ingress)
+- Optional host-level Cloudflare tunnel (outside compose) for public ingress
 
 ## Local Development
 
@@ -43,6 +43,18 @@ docker compose up -d --build
 Ports:
 - App: `http://localhost:3640`
 - SpaceTimeDB: `http://localhost:3900`
+
+## Optional public ingress via host-level Cloudflare tunnel (macOS)
+
+Cloudflare is intentionally kept outside project compose so the app stack stays portable.
+
+```bash
+# host-level config lives in ~/.cloudflared/
+cp ops/cloudflared.host.example.yml ~/.cloudflared/config-spacetimedb-chat.yml
+
+# edit tunnel id + credentials path, then run tunnel on host
+cloudflared tunnel --config ~/.cloudflared/config-spacetimedb-chat.yml run <tunnel-uuid>
+```
 
 ## Notes
 

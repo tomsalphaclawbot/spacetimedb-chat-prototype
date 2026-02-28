@@ -19,17 +19,5 @@ services:
     ports:
       - "3640:4173"
 
-  cloudflared:
-    image: cloudflare/cloudflared:latest
-    container_name: cloudflared-spacetimedb-chat
-    command: tunnel --no-autoupdate --config /etc/cloudflared/config.yml run
-    restart: unless-stopped
-    depends_on:
-      - app
-      - stdb
-    volumes:
-      - ./cloudflared-config.yml:/etc/cloudflared/config.yml:ro
-      - /Users/openclaw/.cloudflared/3c119ad2-6e8e-4608-a653-b1b6ad39d965.json:/etc/cloudflared/creds.json:ro
-
 volumes:
   spacetimedb_data:

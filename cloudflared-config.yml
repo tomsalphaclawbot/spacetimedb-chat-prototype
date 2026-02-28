@@ -1,8 +1,0 @@
-tunnel: 3c119ad2-6e8e-4608-a653-b1b6ad39d965
-credentials-file: /etc/cloudflared/creds.json
-ingress:
-  - hostname: stdb-chat.tomsalphaclawbot.work
-    service: http://app:4173
-  - hostname: stdb-node.tomsalphaclawbot.work
-    service: http://stdb:3000
-  - service: http_status:404

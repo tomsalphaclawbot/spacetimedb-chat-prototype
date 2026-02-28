@@ -7,6 +7,7 @@ import { Identity, Timestamp } from 'spacetimedb';
 
 export type PrettyMessage = {
   senderName: string;
+  senderId: Identity;
   text: string;
   sent: Timestamp;
   kind: 'system' | 'user';
@@ -68,6 +69,7 @@ function App() {
       );
       return {
         senderName: user?.name || message.sender.toHexString().substring(0, 8),
+        senderId: message.sender,
         text: message.text,
         sent: message.sent,
         kind: Identity.zero().isEqual(message.sender) ? 'system' : 'user',
@@ -109,124 +111,187 @@ function App() {
 
   return (
     <div className="App">
-      <div className="profile">
-        <h1>Profile</h1>
-        {!settingName ? (
-          <>
-            <p>{name}</p>
-            <button
-              onClick={() => {
-                setSettingName(true);
-                setNewName(name);
-              }}
-            >
-              Edit Name
-            </button>
-          </>
-        ) : (
-          <form onSubmit={onSubmitNewName}>
-            <input
-              type="text"
-              aria-label="username input"
-              value={newName}
-              onChange={e => setNewName(e.target.value)}
-            />
-            <button type="submit">Submit</button>
-          </form>
-        )}
-      </div>
-      <div className="message-panel">
-        <h1>Messages</h1>
-        {prettyMessages.length < 1 && <p>No messages</p>}
-        <div className="messages">
-          {prettyMessages.map((message, key) => {
-            const sentDate = message.sent.toDate();
-            const now = new Date();
-            const isOlderThanDay =
-              now.getFullYear() !== sentDate.getFullYear() ||
-              now.getMonth() !== sentDate.getMonth() ||
-              now.getDate() !== sentDate.getDate();
-
-            const timeString = sentDate.toLocaleTimeString([], {
-              hour: '2-digit',
-              minute: '2-digit',
-            });
-            const dateString = isOlderThanDay
-              ? sentDate.toLocaleDateString([], {
-                  year: 'numeric',
-                  month: 'short',
-                  day: 'numeric',
-                }) + ' '
-              : '';
-
-            return (
-              <div
-                key={key}
-                className={
-                  message.kind === 'system' ? 'system-message' : 'user-message'
-                }
-              >
-                <p>
-                  <b>
-                    {message.kind === 'system' ? 'System' : message.senderName}
-                  </b>
-                  <span
-                    style={{
-                      fontSize: '0.8rem',
-                      marginLeft: '0.5rem',
-                      color: '#666',
-                    }}
-                  >
-                    {dateString}
-                    {timeString}
-                  </span>
-                </p>
-                <p>{message.text}</p>
-              </div>
-            );
-          })}
+      <div className="app-shell">
+        <div className="profile">
+          <div className="profile-title">
+            <p className="eyebrow">Profile</p>
+            <h1>Welcome back</h1>
+          </div>
+          <div className="profile-card">
+            {!settingName ? (
+              <>
+                <div className="identity">
+                  <div className="avatar">
+                    {name.substring(0, 1).toUpperCase()}
+                  </div>
+                  <div>
+                    <p className="identity-name">{name}</p>
+                    <p className="identity-meta">
+                      {identity.toHexString().substring(0, 12)} •{' '}
+                      {connected ? 'Connected' : 'Offline'}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  className="ghost-button"
+                  onClick={() => {
+                    setSettingName(true);
+                    setNewName(name);
+                  }}
+                >
+                  Edit Name
+                </button>
+              </>
+            ) : (
+              <form onSubmit={onSubmitNewName} className="profile-form">
+                <input
+                  type="text"
+                  aria-label="username input"
+                  value={newName}
+                  onChange={e => setNewName(e.target.value)}
+                  placeholder="Choose a display name"
+                />
+                <button type="submit">Save</button>
+                <button
+                  type="button"
+                  className="ghost-button"
+                  onClick={() => setSettingName(false)}
+                >
+                  Cancel
+                </button>
+              </form>
+            )}
+          </div>
         </div>
-      </div>
-      <div className="online" style={{ whiteSpace: 'pre-wrap' }}>
-        <h1>Online</h1>
-        <div>
-          {onlineUsers.map((user, key) => (
-            <div key={key}>
-              <p>{user.name || user.identity.toHexString().substring(0, 8)}</p>
+        <div className="message-panel">
+          <div className="panel-header">
+            <div>
+              <p className="eyebrow">Chat</p>
+              <h1>Messages</h1>
             </div>
-          ))}
+            <div className="panel-meta">
+              <span className="pill">{prettyMessages.length} total</span>
+            </div>
+          </div>
+          {prettyMessages.length < 1 && (
+            <div className="empty-state">
+              <p>No messages yet.</p>
+              <span>Start the conversation below.</span>
+            </div>
+          )}
+          <div className="messages">
+            {prettyMessages.map((message, key) => {
+              const sentDate = message.sent.toDate();
+              const now = new Date();
+              const isOlderThanDay =
+                now.getFullYear() !== sentDate.getFullYear() ||
+                now.getMonth() !== sentDate.getMonth() ||
+                now.getDate() !== sentDate.getDate();
+
+              const timeString = sentDate.toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+              });
+              const dateString = isOlderThanDay
+                ? sentDate.toLocaleDateString([], {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                  }) + ' '
+                : '';
+
+              const isSelf = message.senderId.isEqual(identity);
+
+              return (
+                <div
+                  key={key}
+                  className={`message-bubble ${message.kind} ${
+                    isSelf ? 'own' : ''
+                  }`}
+                >
+                  <div className="message-header">
+                    <p className="message-sender">
+                      {message.kind === 'system' ? 'System' : message.senderName}
+                    </p>
+                    <span className="message-time">
+                      {dateString}
+                      {timeString}
+                    </span>
+                  </div>
+                  <p className="message-text">{message.text}</p>
+                </div>
+              );
+            })}
+          </div>
         </div>
-        {offlineUsers.length > 0 && (
-          <div>
-            <h1>Offline</h1>
-            {offlineUsers.map((user, key) => (
-              <div key={key}>
-                <p>
-                  {user.name || user.identity.toHexString().substring(0, 8)}
-                </p>
+        <div className="online">
+          <div className="panel-header">
+            <div>
+              <p className="eyebrow">Presence</p>
+              <h1>Online</h1>
+            </div>
+            <div className="panel-meta">
+              <span className="pill success">{onlineUsers.length} live</span>
+            </div>
+          </div>
+          <div className="presence-list">
+            {onlineUsers.map((user, key) => (
+              <div className="presence-card" key={key}>
+                <div className="status-dot online-dot" />
+                <div>
+                  <p className="presence-name">
+                    {user.name || user.identity.toHexString().substring(0, 8)}
+                  </p>
+                  <span className="presence-meta">Active now</span>
+                </div>
               </div>
             ))}
           </div>
-        )}
-      </div>
-      <div className="new-message">
-        <form
-          onSubmit={onSubmitMessage}
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            width: '50%',
-            margin: '0 auto',
-          }}
-        >
-          <h3>New Message</h3>
-          <textarea
-            aria-label="message input"
-            value={newMessage}
-            onChange={e => setNewMessage(e.target.value)}
-          ></textarea>
-          <button type="submit">Send</button>
-        </form>
+          {offlineUsers.length > 0 && (
+            <div className="offline-block">
+              <div className="panel-header">
+                <div>
+                  <p className="eyebrow">Away</p>
+                  <h2>Offline</h2>
+                </div>
+                <div className="panel-meta">
+                  <span className="pill muted">{offlineUsers.length}</span>
+                </div>
+              </div>
+              <div className="presence-list">
+                {offlineUsers.map((user, key) => (
+                  <div className="presence-card muted" key={key}>
+                    <div className="status-dot" />
+                    <div>
+                      <p className="presence-name">
+                        {user.name || user.identity.toHexString().substring(0, 8)}
+                      </p>
+                      <span className="presence-meta">Offline</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+        <div className="new-message">
+          <form onSubmit={onSubmitMessage} className="composer">
+            <div>
+              <p className="eyebrow">Compose</p>
+              <h3>New Message</h3>
+            </div>
+            <textarea
+              aria-label="message input"
+              value={newMessage}
+              onChange={e => setNewMessage(e.target.value)}
+              placeholder="Write something thoughtful..."
+              rows={3}
+            ></textarea>
+            <button type="submit" disabled={!newMessage.trim()}>
+              Send
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );
