@@ -1,0 +1,5 @@
+node_modules/
+dist/
+.env.production.local
+.DS_Store
+spacetimedb/node_modules/

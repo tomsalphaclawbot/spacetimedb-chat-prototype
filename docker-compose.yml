@@ -1,0 +1,35 @@
+services:
+  stdb:
+    build:
+      context: .
+      dockerfile: docker/spacetimedb/Dockerfile
+    container_name: spacetimedb-chat-engine
+    restart: unless-stopped
+    ports:
+      - "3900:3000"
+    volumes:
+      - spacetimedb_data:/home/app/.local/share/spacetime/data
+
+  app:
+    build: .
+    container_name: spacetimedb-chat-web
+    restart: unless-stopped
+    depends_on:
+      - stdb
+    ports:
+      - "3640:4173"
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared-spacetimedb-chat
+    command: tunnel --no-autoupdate --config /etc/cloudflared/config.yml run
+    restart: unless-stopped
+    depends_on:
+      - app
+      - stdb
+    volumes:
+      - ./cloudflared-config.yml:/etc/cloudflared/config.yml:ro
+      - /Users/openclaw/.cloudflared/3c119ad2-6e8e-4608-a653-b1b6ad39d965.json:/etc/cloudflared/creds.json:ro
+
+volumes:
+  spacetimedb_data:

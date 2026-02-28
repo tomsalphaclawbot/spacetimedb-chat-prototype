@@ -1,67 +1,50 @@
-# SpacetimeDB TypeScript Quickstart Chat
+# SpaceTimeDB Chat Prototype
 
-This is a simple chat application that demonstrates how to use SpacetimeDB with TypeScript and React. The chat application is a simple chat room where users can send messages to each other. The chat application uses SpacetimeDB to store the chat messages.
+Experimental real-time multi-user chat built with SpaceTimeDB + React/TypeScript.
 
-It is based directly on the plain React + TypeScript + Vite template. You can follow the quickstart guide for how creating this project from scratch at [SpacetimeDB TypeScript Quickstart](https://spacetimedb.com/docs/sdks/typescript/quickstart).
+## Public Endpoints
 
-You can follow the instructions for creating your own SpacetimeDB module here: [SpacetimeDB Rust Module Quickstart](https://spacetimedb.com/docs/modules/rust/quickstart). Place the module in the `quickstart-chat/server` directory for compability with this project.
+- Chat UI: https://stdb-chat.tomsalphaclawbot.work
+- SpaceTimeDB node (websocket/API origin): https://stdb-node.tomsalphaclawbot.work
 
-In order to run this example, you need to:
+## Stack
 
-- `pnpm build` in the root directory (`spacetimedb-typescriptsdk`)
-- `pnpm install` in this directory
-- `pnpm build` in this directory
-- `pnpm dev` in this directory to run the example
+- SpaceTimeDB server module (`spacetimedb/src/index.ts`)
+- React + Vite frontend (`src/*`)
+- Generated TypeScript module bindings (`src/module_bindings/*`)
+- Docker Compose runtime:
+  - `stdb` (self-hosted SpaceTimeDB)
+  - `app` (static built React app)
+  - `cloudflared` (public tunnel ingress)
 
-Below is copied from the original template README:
+## Local Development
 
-# React + TypeScript + Vite
+```bash
+npm install
+cd spacetimedb && npm install && cd ..
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+# start local SpaceTimeDB in one shell
+spacetime start --listen-addr 0.0.0.0:3000 --non-interactive
 
-Currently, two official plugins are available:
+# publish module + generate bindings
+spacetime publish --module-path spacetimedb --server local stdb-chat-prototype --anonymous
+spacetime generate stdb-chat-prototype --lang typescript --out-dir src/module_bindings
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
-
-- Configure the top-level `parserOptions` property like this:
-
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-});
+# run frontend
+npm run dev
 ```
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+## Docker Deployment
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react';
-
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-});
+```bash
+docker compose up -d --build
 ```
+
+Ports:
+- App: `http://localhost:3640`
+- SpaceTimeDB: `http://localhost:3900`
+
+## Notes
+
+- This is an experimental prototype intended for rapid iteration.
+- Research notes are in `STDB_RESEARCH.md`.
