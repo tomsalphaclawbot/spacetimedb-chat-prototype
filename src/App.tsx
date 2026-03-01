@@ -18,6 +18,7 @@ function App() {
   const [settingName, setSettingName] = useState(false);
   const [systemMessages, setSystemMessages] = useState([] as Types.Message[]);
   const [newMessage, setNewMessage] = useState('');
+  const [showUsers, setShowUsers] = useState(false);
 
   const { identity, isActive: connected } = useSpacetimeDB();
   const setName = useReducer(reducers.setName);
@@ -121,9 +122,7 @@ function App() {
             {!settingName ? (
               <>
                 <div className="identity">
-                  <div className="avatar">
-                    {name.substring(0, 1).toUpperCase()}
-                  </div>
+                  <div className="avatar">{name.substring(0, 1).toUpperCase()}</div>
                   <div>
                     <p className="identity-name">{name}</p>
                     <p className="identity-meta">
@@ -163,77 +162,130 @@ function App() {
             )}
           </div>
         </div>
-        <div className="message-panel">
-          <div className="panel-header">
-            <div>
-              <p className="eyebrow">Chat</p>
-              <h1>Messages</h1>
-            </div>
-            <div className="panel-meta">
-              <span className="pill">{prettyMessages.length} total</span>
-            </div>
-          </div>
-          {prettyMessages.length < 1 && (
-            <div className="empty-state">
-              <p>No messages yet.</p>
-              <span>Start the conversation below.</span>
-            </div>
-          )}
-          <div className="messages">
-            {prettyMessages.map((message, key) => {
-              const sentDate = message.sent.toDate();
-              const now = new Date();
-              const isOlderThanDay =
-                now.getFullYear() !== sentDate.getFullYear() ||
-                now.getMonth() !== sentDate.getMonth() ||
-                now.getDate() !== sentDate.getDate();
 
-              const timeString = sentDate.toLocaleTimeString([], {
-                hour: '2-digit',
-                minute: '2-digit',
-              });
-              const dateString = isOlderThanDay
-                ? sentDate.toLocaleDateString([], {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric',
-                  }) + ' '
-                : '';
-
-              const isSelf = message.senderId.isEqual(identity);
-
-              return (
-                <div
-                  key={key}
-                  className={`message-bubble ${message.kind} ${
-                    isSelf ? 'own' : ''
-                  }`}
+        <div className="chat-shell">
+          <div className="message-panel">
+            <div className="panel-header">
+              <div>
+                <p className="eyebrow">Chat</p>
+                <h1>Messages</h1>
+              </div>
+              <div className="panel-meta">
+                <span className="pill">{prettyMessages.length} total</span>
+                <button
+                  type="button"
+                  className="ghost-button people-toggle"
+                  aria-expanded={showUsers}
+                  onClick={() => setShowUsers(true)}
                 >
-                  <div className="message-header">
-                    <p className="message-sender">
-                      {message.kind === 'system' ? 'System' : message.senderName}
-                    </p>
-                    <span className="message-time">
-                      {dateString}
-                      {timeString}
-                    </span>
-                  </div>
-                  <p className="message-text">{message.text}</p>
+                  People ({onlineUsers.length})
+                </button>
+              </div>
+            </div>
+
+            <div className="messages-scroll">
+              {prettyMessages.length < 1 && (
+                <div className="empty-state">
+                  <p>No messages yet.</p>
+                  <span>Start the conversation below.</span>
                 </div>
-              );
-            })}
+              )}
+
+              <div className="messages">
+                {prettyMessages.map((message, key) => {
+                  const sentDate = message.sent.toDate();
+                  const now = new Date();
+                  const isOlderThanDay =
+                    now.getFullYear() !== sentDate.getFullYear() ||
+                    now.getMonth() !== sentDate.getMonth() ||
+                    now.getDate() !== sentDate.getDate();
+
+                  const timeString = sentDate.toLocaleTimeString([], {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  });
+                  const dateString = isOlderThanDay
+                    ? sentDate.toLocaleDateString([], {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                      }) + ' '
+                    : '';
+
+                  const isSelf = message.senderId.isEqual(identity);
+
+                  return (
+                    <div
+                      key={key}
+                      className={`message-bubble ${message.kind} ${
+                        isSelf ? 'own' : ''
+                      }`}
+                    >
+                      <div className="message-header">
+                        <p className="message-sender">
+                          {message.kind === 'system'
+                            ? 'System'
+                            : message.senderName}
+                        </p>
+                        <span className="message-time">
+                          {dateString}
+                          {timeString}
+                        </span>
+                      </div>
+                      <p className="message-text">{message.text}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="new-message">
+              <form onSubmit={onSubmitMessage} className="composer">
+                <div>
+                  <p className="eyebrow">Compose</p>
+                  <h3>New Message</h3>
+                </div>
+                <textarea
+                  aria-label="message input"
+                  value={newMessage}
+                  onChange={e => setNewMessage(e.target.value)}
+                  placeholder="Write something thoughtful..."
+                  rows={3}
+                ></textarea>
+                <button type="submit" disabled={!newMessage.trim()}>
+                  Send
+                </button>
+              </form>
+            </div>
           </div>
         </div>
-        <div className="online">
+
+        <button
+          type="button"
+          className={`drawer-backdrop ${showUsers ? 'visible' : ''}`}
+          onClick={() => setShowUsers(false)}
+          aria-hidden={!showUsers}
+          tabIndex={showUsers ? 0 : -1}
+        />
+
+        <aside className={`user-drawer ${showUsers ? 'open' : ''}`}>
           <div className="panel-header">
             <div>
               <p className="eyebrow">Presence</p>
-              <h1>Online</h1>
+              <h1>People</h1>
             </div>
             <div className="panel-meta">
               <span className="pill success">{onlineUsers.length} live</span>
+              <button
+                type="button"
+                className="ghost-button"
+                onClick={() => setShowUsers(false)}
+              >
+                Close
+              </button>
             </div>
           </div>
+
           <div className="presence-list">
             {onlineUsers.map((user, key) => (
               <div className="presence-card" key={key}>
@@ -247,6 +299,7 @@ function App() {
               </div>
             ))}
           </div>
+
           {offlineUsers.length > 0 && (
             <div className="offline-block">
               <div className="panel-header">
@@ -273,25 +326,7 @@ function App() {
               </div>
             </div>
           )}
-        </div>
-        <div className="new-message">
-          <form onSubmit={onSubmitMessage} className="composer">
-            <div>
-              <p className="eyebrow">Compose</p>
-              <h3>New Message</h3>
-            </div>
-            <textarea
-              aria-label="message input"
-              value={newMessage}
-              onChange={e => setNewMessage(e.target.value)}
-              placeholder="Write something thoughtful..."
-              rows={3}
-            ></textarea>
-            <button type="submit" disabled={!newMessage.trim()}>
-              Send
-            </button>
-          </form>
-        </div>
+        </aside>
       </div>
     </div>
   );
