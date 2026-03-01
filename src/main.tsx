@@ -24,6 +24,14 @@ const onDisconnect = () => {
 
 const onConnectError = (_ctx: ErrorContext, err: Error) => {
   console.log('Error connecting to SpacetimeDB:', err);
+
+  // Recovery for stale/invalid auth tokens after DB identity resets or republishes.
+  const existingToken = localStorage.getItem(TOKEN_KEY);
+  if (existingToken) {
+    localStorage.removeItem(TOKEN_KEY);
+    // Re-bootstrap connection without stale token.
+    window.location.reload();
+  }
 };
 
 const connectionBuilder = DbConnection.builder()
